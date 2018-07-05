@@ -551,6 +551,7 @@ FROM(SELECT
          FROM TEAM
          WHERE
             TEAM_ID LIKE T.TEAM_ID) 팀명,
+        P.POSITION 포지션,
         AVG(P.HEIGHT) 평균키
      FROM
         TEAM T
@@ -560,6 +561,7 @@ FROM(SELECT
         P.POSITION LIKE 'GK'
      GROUP BY
         T.TEAM_ID
+        --,P.POSITION
      ORDER BY
         평균키 DESC) A
 WHERE
@@ -668,7 +670,25 @@ FROM(SELECT
         AND K.GUBUN LIKE 'Y'
     
      ORDER BY 점수차 DESC) A
-WHERE A.점수차 LIKE '가장 큰 점수'
+WHERE A.점수차 LIKE (SELECT B.점수차
+                     FROM(SELECT
+                            K.SCHE_DATE 경기날짜,
+                            HT.TEAM_NAME || ' VS ' || AT.TEAM_NAME 경기,
+                            CASE
+                                WHEN K.HOME_SCORE >= K.AWAY_SCORE THEN (K.HOME_SCORE - K.AWAY_SCORE)
+                                ELSE K.AWAY_SCORE - K.HOME_SCORE
+                            END 점수차
+                          FROM
+                              SCHEDULE K
+                                JOIN TEAM HT
+                                    ON K.HOMETEAM_ID LIKE HT.TEAM_ID
+                                JOIN TEAM AT
+                                    ON K.AWAYTEAM_ID LIKE AT.TEAM_ID
+                          WHERE
+                            K.SCHE_DATE LIKE '2012%'
+                            AND K.GUBUN LIKE 'Y'
+                          ORDER BY 점수차 DESC)B
+                     WHERE ROWNUM LIKE 1) --가장높은 점수차와 같은 점수차를 출력
 ;
 
 -- 029
@@ -709,4 +729,3 @@ WHERE A.WINNER NOT LIKE '무승부'
 GROUP BY A.WINNER
 ORDER BY 승리 DESC
 ;
-    
